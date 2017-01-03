@@ -16,15 +16,11 @@ the recurrence. Here, we saw that the "softmax" function performed best as
 the activation function in the middle layer.
 """
 
-import sys
-import os
-import input_util
 import numpy as np
-import test_util
-from nn_globals import *
-from net_util import stochastic_gradient_descent
-import net_prediction
-from feed_forward_nn import get_variables, get_pollutants
+from nn_globals import predict_nn, OUTPUT_DIM, NUM_VARS, NUM_POLLUTANTS
+from nn_globals import NORM_FUNCTIONS, NORM_GRADIENTS
+from nn_globals import ACTIVATION_FUNCTIONS, ACTIVATION_GRADIENTS
+from pollution_hour import get_pollutants, get_variables
 
 def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 	possible_update, hyper, print_loss_vector = False):
@@ -54,7 +50,6 @@ def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 		if X == None:
 			h = np.zeros((hyper.hidden_dim, 1))
 			continue
-
 		z1 = (W1.dot(X) + b1) + U.dot(h)
 		z2 = ACTIVATION_FUNCTIONS[hyper.activation](z1) 
 		predicted_levels = W2.dot(z2) + b2
@@ -71,13 +66,13 @@ def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 			loss_vector[i] /= len(all_input_data)
 		print "Loss Vector: \n", loss_vector
 
-	regw1 = hyper.reg_params['W1'] * 0.5 * (np.linalg.norm(W1) ** 2) 
-	regw2 = hyper.reg_params['W2'] * 0.5 * (np.linalg.norm(W2) ** 2) 
-	regb1 = hyper.reg_params['b1'] * 0.5 * (np.linalg.norm(b1) ** 2) 
-	regb2 = hyper.reg_params['b2'] * 0.5 * (np.linalg.norm(b2) ** 2) 
-	regu  = hyper.reg_params['U']  * 0.5 * (np.linalg.norm(U) ** 2) 
+	total_reg = 0.0
+	for param in hyper.reg_params:
+		if param in model:
+			reg_const = hyper.reg_params[param]
+			total_reg += reg_const * 0.5 * (np.linalg.norm(model[param]) ** 2) 
 
-	return loss / len(all_input_data) + regw1 + regw2 + regb1 + regb2 + regu
+	return loss / len(all_input_data) + total_reg
 
 #################### Gradient functions ####################
 
@@ -373,120 +368,8 @@ def update(model, input_data):
 	z2 = np.tanh(z1)
 	model['h'].append(z2)
 
-def run_neural_net(pollution_data_list, hyper, verbose, verbose_n):
-	""" Runs the neural net on pollution_data
-	
-	@param pollution_data_list: list of pollutionHour objects representing all
-								data in the dataset
-	@param num_hours_used:      number of hours to use when predicting the next hour
-	@param hidden_dim:          number of neurons to use in the hidden layer
-	@param num_iterations:      number of iterations to run SGD
-	@param verbose:             0 to NOT print; 1 to print on each update; 2 to print only once per verbose_n iterations
-	@param verbose_n:           used only when verbose == 2 (see description of verbose param for details)       
-	"""
-
-	(input_vectors, output_vectors) = process_data_set(
-		pollution_data_list, hyper.past_scope)
-
-	train_data = zip(input_vectors, output_vectors)
-	loss_gradients = [loss_gradient_W1, loss_gradient_b1, \
-		loss_gradient_W2, loss_gradient_b2, loss_gradient_U]
-	input_dim = NUM_VARS * hyper.past_scope
-
-	# Initialize Model
-	W1 = np.random.randn(hyper.hidden_dim, input_dim) / np.sqrt(input_dim)
-	b1 = np.zeros((hyper.hidden_dim, 1))
-	W2 = np.random.randn(OUTPUT_DIM, hyper.hidden_dim) / np.sqrt(hyper.hidden_dim)
-	b2 = np.zeros((OUTPUT_DIM, 1))
-	U = np.random.randn(hyper.hidden_dim, hyper.hidden_dim) / np.sqrt(hyper.hidden_dim)
-	h = [np.zeros((hyper.hidden_dim, 1))]
-
-	model = { 'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2, 'U': U, 'h': h}
-
-	return stochastic_gradient_descent(calculate_loss, ['W1', 'b1', 'W2', 'b2', 'U'], \
-		loss_gradients, train_data, input_dim, OUTPUT_DIM, model, update, hyper, \
-		verbose=verbose, verbose_n=verbose_n)
-
-def test_module(pollution_dir_train, pollution_dir_test, hyper, \
-	verbose = 2, verbose_n = 4):
-	# TRAINING SET
-	pollution_data_list_train = input_util.data_from_directory(pollution_dir_train)
-
-	# TEST SET
-	pollution_data_list_test = input_util.data_from_directory(pollution_dir_test)
-	(model, loss) = run_neural_net(pollution_data_list_train, hyper, verbose, verbose_n)
-
-	print 'PROCESSING TRAIN SET'
-	(train_inputs, train_outputs) = process_data_set(
-		pollution_data_list_train, hyper.past_scope)
-
-	print 'PROCESSING TEST SET'
-	(test_inputs, test_outputs) = process_data_set(
-		pollution_data_list_test, hyper.past_scope)
-
-	# Calculate average levels
-	temp_train = []
-	for elem in train_inputs:
-		if elem != None:
-			temp_train.append(elem)
-	temp_np_train = np.array(temp_train)
-
-	data_len_train = float(len(temp_train))
-	average_levels_train = np.sum(temp_np_train, axis=0)[: OUTPUT_DIM]
-	average_levels_train /= data_len_train
-
-	print "######################## CALCULATING LOSS ########################"
-	loss = calculate_loss(train_inputs, train_outputs, model, average_levels_train, \
-		update, hyper, print_loss_vector = True)
-	print "TRAIN LOSS: ", loss
-	
-	""" END TRAIN"""
-
-	(test_inputs, test_outputs) = process_data_set(
-		pollution_data_list_test, hyper.past_scope)
-
-	# Calculate average levels for test set
-	temp_test = []
-	for elem in test_inputs:
-		if elem != None:
-			temp_test.append(elem)
-	temp_np_test = np.array(temp_test)
-
-	data_len_test = float(len(temp_test))
-	average_levels_test = np.sum(temp_np_test, axis=0)[: OUTPUT_DIM]
-	average_levels_test /= data_len_test
-
-	print "######################## CALCULATING LOSS ########################"
-	loss = calculate_loss(test_inputs, test_outputs, model, average_levels_test, \
-		update, hyper, print_loss_vector = True)
-	print "TEST LOSS: ", loss
-	return model
-
-def main():
-	input_args = input_util.parse_nn_input()
-	(pollution_dir_train, pollution_dir_test, hyper, pollutant) = input_args
-	test_data_set = input_util.data_from_directory(pollution_dir_test)
-	print 'READING DATA COMPLETE'
-	model = test_module(pollution_dir_train, pollution_dir_test, hyper, \
-		verbose = 2, verbose_n = 1)
-	errors = np.zeros((hyper.future_scope,))
-	for test_data in test_data_set:
-		actual_levels = net_prediction.isolate_pollutant_series(
-			test_data, pollutant, hyper.past_scope, hyper.future_scope)
-		predicted_levels = net_prediction.predict_next_nn_points(
-			model, test_data, pollutant, hyper.past_scope, \
-			hyper.future_scope, hyper.activation, feedback = True)
-		err = test_util.evaluate_error(
-			predicted_levels, actual_levels, hyper.norm)
-		for j in range(hyper.future_scope):
-			errors[j] += err[j] / float(len(test_data_set))
-	print 'Running Average Error'
-	for i in range(len(errors)):
-		print str(i + 1) + ': ' + str(sum(errors[: i + 1]) / float(i + 1))
-
-if __name__ == '__main__':
-	main()
-
+def get_loss_gradients():
+	return [loss_gradient_W1, loss_gradient_b1, loss_gradient_W2, loss_gradient_b2, loss_gradient_U]
 
 
 

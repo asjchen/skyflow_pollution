@@ -19,6 +19,19 @@ class NetHyperparams:
 		self.norm = norm
 		self.step_scale = step_scale
 
+def predict_nn(model, input_vector, activation):
+	W1, b1, W2, b2 = model['W1'], model['b1'], model['W2'], model['b2']
+	z1 = W1.dot(input_vector) + b1
+	z2 = ACTIVATION_FUNCTIONS[activation](z1) 
+	return W2.dot(z2) + b2
+
+def predict_nn_with_feedback(model, input_vector, activation):
+	W1, b1, W2, b2, U, h = model['W1'], model['b1'], model['W2'], model['b2'], model['U'], model['h']
+	z1 = (W1.dot(input_vector) + b1) + U.dot(h)
+	z2 = ACTIVATION_FUNCTIONS[activation](z1) 
+	model['h'] = z2
+	return W2.dot(z2) + b2
+
 def tanh(X):
 	return np.tanh(X)
 

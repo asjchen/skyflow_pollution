@@ -6,12 +6,14 @@ import argparse
 import csv
 import re
 from pollution_hour import PollutionHour
-from nn_globals import *
+from nn_globals import NetHyperparams
+from nn_globals import NORM_FUNCTIONS, NORM_GRADIENTS
+from nn_globals import ACTIVATION_FUNCTIONS, ACTIVATION_GRADIENTS
 
 default_past_scope = 12
 default_future_scope = 12
 default_hidden_dim = 100
-default_activation = 'softplus'
+default_activation = 'tanh'
 default_num_iterations = 20
 default_norm = 'L1'
 default_step_scale = 0.05
@@ -92,10 +94,7 @@ def remove_slash(name):
 		return name[: -1]
 	return name
 
-def make_base_parser(descr):
-	parser = argparse.ArgumentParser(description=descr)
-	parser.add_argument('pollution_dir_test', type=str, \
-		help='Directory with the test pollution data')
+def make_base_parser(parser):
 	parser.add_argument('-f', '--future_scope', type=int, \
 		default=default_future_scope, \
 		help='Scope of future -- number of points to predict')
@@ -104,12 +103,14 @@ def make_base_parser(descr):
 	parser.add_argument('-n', '--norm', default=default_norm, \
 		choices=NORM_FUNCTIONS.keys(), \
 		help='Loss function, choose from ' + str(NORM_FUNCTIONS.keys()))
-	return parser
 
 def parse_baseline_input():
-	base_descr = ('Baseline algorithm -- batch linear regression'
+	baseline_descr = ('Baseline algorithm -- batch linear regression'
 		' on pollution levels')
-	parser = make_base_parser(base_descr)
+	parser = argparse.ArgumentParser(description=baseline_descr)
+	make_base_parser(parser)
+	parser.add_argument('pollution_dir_test', type=str, \
+		help='Directory with the test pollution data')
 	parser.add_argument('-p', '--past_scope', type=int, \
 		default=default_past_scope, \
 		help='Scope of past -- number of points to interpolate from')
@@ -122,7 +123,10 @@ def parse_oracle_input():
 	oracle_descr = ('Oracle algorithm -- localized quadratic regression at '
 		'one point at a time, with data from both before and after '
 		'each target point')
-	parser = make_base_parser(oracle_descr)
+	parser = argparse.ArgumentParser(description=oracle_descr)
+	make_base_parser(parser)
+	parser.add_argument('pollution_dir_test', type=str, \
+		help='Directory with the test pollution data')
 	parser.add_argument('-r', '--radius', type=int, \
 		default=default_past_scope, \
 		help='Radius of points around the target data point to interpolate from')
@@ -133,36 +137,48 @@ def parse_oracle_input():
 
 def parse_nn_input():
 	nn_descr = 'Neural Network -- runs on a sliding window of the input data'
-	parser = make_base_parser(nn_descr)
-	parser.add_argument('pollution_dir_train', type=str, \
-		help='Directory with the train pollution data')
-	parser.add_argument('-d', '--hidden_dim', type=int, \
-		default=default_hidden_dim, \
-		help='Dimension of the hidden layer in a 3-layer NN')
-	activ_help = 'Activation function for the middle layer, choose from '
-	parser.add_argument('-a', '--activation', type=str, \
-		default=default_activation, choices = ACTIVATION_FUNCTIONS.keys(), \
-		help=activ_help + str(ACTIVATION_FUNCTIONS.keys()))
-	parser.add_argument('-p', '--past_scope', type=int, \
-		default=default_past_scope, \
-		help='Number of hours used for each iteration of the sliding window')
-	parser.add_argument('--reg_w1', type=float, default=0.0, 
-		help='Regularization parameter for W1')
-	parser.add_argument('--reg_b1', type=float, default=0.0, 
-		help='Regularization parameter for b1')
-	parser.add_argument('--reg_w2', type=float, default=0.0, 
-		help='Regularization parameter for W2')
-	parser.add_argument('--reg_b2', type=float, default=0.0, 
-		help='Regularization parameter for b2')
-	parser.add_argument('--reg_u', type=float, default=0.0, 
-		help='Regularization parameter for U')
-	parser.add_argument('-i', '--num_iterations', type=int, \
-		default=default_num_iterations, \
-		help='Number of iterations/passes over the training data')
-	parser.add_argument('-s', '--step_scale', type=float, \
-		default=default_step_scale, \
-		help='The value with which to scale the step size')
-	args = parser.parse_args()
+	top_parser = argparse.ArgumentParser(description=nn_descr)
+	subparsers = top_parser.add_subparsers(title='subcommands',
+		description='valid subcommands', help='Neural network types')
+	forward_parser = subparsers.add_parser('feed-forward', help='Feed-Forward NN')
+	forward_parser.set_defaults(has_feedback=False)
+	elman_parser = subparsers.add_parser('elman', help='Elman RNN')
+	elman_parser.set_defaults(has_feedback=True)
+	subparser_list = [forward_parser, elman_parser]
+	for i in range(2):
+		parser = subparser_list[i]
+		make_base_parser(parser)
+		parser.add_argument('pollution_dir_train', type=str, \
+			help='Directory with the train pollution data')
+		parser.add_argument('pollution_dir_test', type=str, \
+			help='Directory with the test pollution data')
+		parser.add_argument('-d', '--hidden_dim', type=int, \
+			default=default_hidden_dim, \
+			help='Dimension of the hidden layer in a 3-layer NN')
+		activ_help = 'Activation function for the middle layer, choose from '
+		parser.add_argument('-a', '--activation', type=str, \
+			default=default_activation, choices = ACTIVATION_FUNCTIONS.keys(), \
+			help=activ_help + str(ACTIVATION_FUNCTIONS.keys()))
+		parser.add_argument('-p', '--past_scope', type=int, \
+			default=default_past_scope, \
+			help='Number of hours used for each iteration of the sliding window')
+		parser.add_argument('--reg_w1', type=float, default=0.0, 
+			help='Regularization parameter for W1')
+		parser.add_argument('--reg_b1', type=float, default=0.0, 
+			help='Regularization parameter for b1')
+		parser.add_argument('--reg_w2', type=float, default=0.0, 
+			help='Regularization parameter for W2')
+		parser.add_argument('--reg_b2', type=float, default=0.0, 
+			help='Regularization parameter for b2')
+		parser.add_argument('--reg_u', type=float, default=0.0, 
+			help='Regularization parameter for U')
+		parser.add_argument('-i', '--num_iterations', type=int, \
+			default=default_num_iterations, \
+			help='Number of iterations/passes over the training data')
+		parser.add_argument('-s', '--step_scale', type=float, \
+			default=default_step_scale, \
+			help='The value with which to scale the step size')
+	args = top_parser.parse_args()
 	args.pollution_dir_test = remove_slash(args.pollution_dir_test)
 	args.pollution_dir_train = remove_slash(args.pollution_dir_train)
 	reg_params = { 'W1': args.reg_w1, 'b1': args.reg_b1, 'W2': args.reg_w2, \
@@ -170,5 +186,6 @@ def parse_nn_input():
 	hyper = NetHyperparams(args.hidden_dim, args.activation, args.past_scope, \
 		reg_params, args.num_iterations, args.future_scope, args.norm, \
 		args.step_scale)
-	return (args.pollution_dir_train, args.pollution_dir_test, hyper, args.chemical)
+	return (args.has_feedback, args.pollution_dir_train, \
+		args.pollution_dir_test, hyper, args.chemical)
 

@@ -3,21 +3,9 @@
 from pollution_hour import PollutionHour
 import numpy as np
 from feed_forward_nn import process_data_set
-from nn_globals import *
+from nn_globals import predict_nn, predict_nn_with_feedback
+from nn_globals import OUTPUT_DIM, NUM_VARS, NUM_POLLUTANTS
 import scipy.stats
-
-def predict_nn(model, input_vector, activation):
-	W1, b1, W2, b2 = model['W1'], model['b1'], model['W2'], model['b2']
-	z1 = W1.dot(input_vector) + b1
-	z2 = ACTIVATION_FUNCTIONS[activation](z1) 
-	return W2.dot(z2) + b2
-
-def predict_with_feedback(model, input_vector, activation):
-	W1, b1, W2, b2, U, h = model['W1'], model['b1'], model['W2'], model['b2'], model['U'], model['h']
-	z1 = (W1.dot(input_vector) + b1) + U.dot(h)
-	z2 = ACTIVATION_FUNCTIONS[activation](z1) 
-	model['h'] = z2
-	return W2.dot(z2) + b2
 
 def predict_next_points(next_prediction, num_hours_used, input_vectors, output_vectors, future_scope):
 	curr_input = input_vectors[0]
@@ -44,7 +32,7 @@ def predict_next_nn_points(model, pollution_data, pollutant, num_hours_used, fut
 		if not feedback:
 			return predict_nn(model, curr_input, activation)
 		else:
-			return predict_with_feedback(model, curr_input, activation)
+			return predict_nn_with_feedback(model, curr_input, activation)
 	predictions = predict_next_points(next_nn_prediction, num_hours_used, input_vectors, output_vectors, future_scope)
 	if pollutant != None:
 		return [output[pollutant_idx] for output in predictions]

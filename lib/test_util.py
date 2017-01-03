@@ -1,7 +1,7 @@
 # Functions for testing
 
 import numpy as np
-from nn_globals import *
+from nn_globals import NORM_FUNCTIONS
 
 def evaluate_error(predicted, actual, norm):
 	assert(len(predicted) > 0)

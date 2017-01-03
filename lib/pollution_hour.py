@@ -20,6 +20,13 @@ class PollutionHour:
 		for weath in sorted(self.weather):
 			print weath + ': ' + self.weather[poll]
 
+def get_pollutants(poll_hour):
+    # accessor function returns list of pollutant values in poll_hour
+    return [poll_hour.pollutants[name] for name in sorted(poll_hour.pollutants)]
 
+def get_variables(poll_hour):
+    # accessor returns list of variable values in poll_hour (pollutants first)
+    weather_vars = [poll_hour.weather[name] for name in sorted(poll_hour.weather)]
+    return get_pollutants(poll_hour) + weather_vars
 
 
