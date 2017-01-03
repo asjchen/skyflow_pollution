@@ -106,10 +106,6 @@ def isolate_pollutant_series(pollution_data, pollutant, num_hours_used, future_s
 	else:
 		return output_vectors[: future_scope]
 	
-if __name__ == '__main__':
-	main()
-
-
 
 
 

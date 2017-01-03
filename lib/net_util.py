@@ -4,14 +4,10 @@ a variety of useful functions for building neural nets
 
 import math
 import numpy as np
-import threading
-import multiprocessing
-import time
 import math
 
-def stochastic_gradient_descent(loss_func, arg_names, loss_func_grad, activation, train_data, \
-    num_iterations, input_dim, output_dim, hidden_dim, model, possible_update, reg_params, norm, \
-    step_scale, verbose = 0, verbose_n = 1):
+def stochastic_gradient_descent(loss_func, arg_names, loss_func_grad, train_data, \
+    input_dim, output_dim, model, possible_update, hyper, verbose = 0, verbose_n = 1):
     """Runs stochastic gradient descent
 
     @param loss_func:       full loss based on the whole data set
@@ -51,19 +47,20 @@ def stochastic_gradient_descent(loss_func, arg_names, loss_func_grad, activation
 
     # Main loop for SGD
     num_updates = 0 # used for step size
-
-    for t in range(num_iterations):
+    train_inputs = [j[0] for j in train_data]
+    train_outputs = [j[1] for j in train_data]
+    for t in range(hyper.num_iterations):
 
         for input_data, correct_output_data in train_data:
 
             if input_data == None:
-                model['h'] = [np.zeros((hidden_dim, 1))]
+                model['h'] = [np.zeros((hyper.hidden_dim, 1))]
                 continue
 
             num_updates += 1
-            eta = step_scale / (math.sqrt(num_updates))
+            eta = hyper.step_scale / (math.sqrt(num_updates))
             for i in range(len(arg_names)):
-                grad = loss_func_grad[i](input_data, correct_output_data, model, average_levels, activation, reg_params, norm)
+                grad = loss_func_grad[i](input_data, correct_output_data, model, average_levels, hyper)
                 model[arg_names[i]] -= eta * grad 
 
             possible_update(model, input_data)
@@ -74,14 +71,9 @@ def stochastic_gradient_descent(loss_func, arg_names, loss_func_grad, activation
         if verbose == 1 or verbose == 2 and t % verbose_n == 0:
             print "-------------------------------------------------------"
             print "ITERATION ", t, " COMPLETE"
-            #print "W1 = ", model['W1'], " ; b1 = ", model['b1'], " ; W2 = ", \
-            # model['W2'], " ; b2 = ", model['b2']
-            print "Current Loss: ", loss_func([j[0] for j in train_data], \
-                                             [j[1] for j in train_data], \
-                                             model, average_levels, activation, \
-                                             hidden_dim, possible_update, reg_params, norm)
-            
-    return (model, loss_func([j[0] for j in train_data], \
-                            [j[1] for j in train_data], \
-                            model, average_levels, activation, \
-                            hidden_dim, possible_update, reg_params, norm))
+            current_loss = loss_func(train_inputs, train_outputs, model, \
+                average_levels, possible_update, hyper)
+            print "Current Loss: ", current_loss
+    final_loss = loss_func(train_inputs, train_outputs, model, \
+        average_levels, possible_update, hyper)
+    return (model, final_loss)

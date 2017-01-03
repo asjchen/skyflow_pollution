@@ -5,7 +5,8 @@ import argparse
 from datetime import datetime
 
 class PollutionHour:
-	def __init__(self, chron, station, pollutant_names, pollutant_vals, weather_names, weather_vals):
+	def __init__(self, chron, station, pollutant_names, pollutant_vals, \
+		weather_names, weather_vals):
 		self.chron = datetime.strptime(chron, '%Y/%m/%d %H:%M')
 		self.station = station
 		self.pollutants = dict(zip(pollutant_names, pollutant_vals))

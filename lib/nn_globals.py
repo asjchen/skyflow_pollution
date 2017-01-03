@@ -7,6 +7,18 @@ NUM_NONPOLLUTANTS = 7
 NUM_VARS = NUM_NONPOLLUTANTS + NUM_POLLUTANTS
 OUTPUT_DIM = NUM_POLLUTANTS
 
+class NetHyperparams:
+	def __init__(self, hidden_dim, activation, past_scope, reg_params, \
+		num_iterations, future_scope, norm, step_scale):
+		self.hidden_dim = hidden_dim
+		self.activation = activation
+		self.past_scope = past_scope
+		self.reg_params = reg_params
+		self.num_iterations = num_iterations
+		self.future_scope = future_scope
+		self.norm = norm
+		self.step_scale = step_scale
+
 def tanh(X):
 	return np.tanh(X)
 

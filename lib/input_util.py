@@ -11,7 +11,7 @@ from nn_globals import *
 default_past_scope = 12
 default_future_scope = 12
 default_hidden_dim = 100
-default_activation = 'tanh'
+default_activation = 'softplus'
 default_num_iterations = 20
 default_norm = 'L1'
 default_step_scale = 0.05
@@ -92,13 +92,10 @@ def remove_slash(name):
 		return name[: -1]
 	return name
 
-def parse_baseline_input():
-	parser = argparse.ArgumentParser()
+def make_base_parser(descr):
+	parser = argparse.ArgumentParser(description=descr)
 	parser.add_argument('pollution_dir_test', type=str, \
 		help='Directory with the test pollution data')
-	parser.add_argument('-p', '--past_scope', type=int, \
-		default=default_past_scope, \
-		help='Scope of past -- number of points to interpolate from')
 	parser.add_argument('-f', '--future_scope', type=int, \
 		default=default_future_scope, \
 		help='Scope of future -- number of points to predict')
@@ -106,44 +103,46 @@ def parse_baseline_input():
 		help='Pollutant to graph/output time series for')
 	parser.add_argument('-n', '--norm', default=default_norm, \
 		choices=NORM_FUNCTIONS.keys(), \
-		help='Loss function to use for gradient descent, choose from ' + str(NORM_FUNCTIONS.keys()))
+		help='Loss function, choose from ' + str(NORM_FUNCTIONS.keys()))
+	return parser
+
+def parse_baseline_input():
+	base_descr = ('Baseline algorithm -- batch linear regression'
+		' on pollution levels')
+	parser = make_base_parser(base_descr)
+	parser.add_argument('-p', '--past_scope', type=int, \
+		default=default_past_scope, \
+		help='Scope of past -- number of points to interpolate from')
 	args = parser.parse_args()
 	args.pollution_dir_test = remove_slash(args.pollution_dir_test)
 	return (args.pollution_dir_test, args.past_scope, args.future_scope, \
 		args.chemical, args.norm)
 
 def parse_oracle_input():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('pollution_dir_test', type=str, \
-		help='Directory with the test pollution data')
+	oracle_descr = ('Oracle algorithm -- localized quadratic regression at '
+		'one point at a time, with data from both before and after '
+		'each target point')
+	parser = make_base_parser(oracle_descr)
 	parser.add_argument('-r', '--radius', type=int, \
 		default=default_past_scope, \
 		help='Radius of points around the target data point to interpolate from')
-	parser.add_argument('-f', '--future_scope', type=int, \
-		default=default_future_scope, \
-		help='Scope of future -- number of points to predict')
-	parser.add_argument('-c', '--chemical', default=None, \
-		help='Pollutant to graph/output time series for')
-	parser.add_argument('-n', '--norm', default=default_norm, \
-		choices=NORM_FUNCTIONS.keys(), \
-		help='Loss function to use for gradient descent, choose from ' + str(NORM_FUNCTIONS.keys()))
 	args = parser.parse_args()
 	args.pollution_dir_test = remove_slash(args.pollution_dir_test)
 	return (args.pollution_dir_test, args.radius, args.future_scope, \
 		args.chemical, args.norm)
 
 def parse_nn_input():
-	parser = argparse.ArgumentParser()
+	nn_descr = 'Neural Network -- runs on a sliding window of the input data'
+	parser = make_base_parser(nn_descr)
 	parser.add_argument('pollution_dir_train', type=str, \
 		help='Directory with the train pollution data')
-	parser.add_argument('pollution_dir_test', type=str, \
-		help='Directory with the test pollution data')
 	parser.add_argument('-d', '--hidden_dim', type=int, \
 		default=default_hidden_dim, \
 		help='Dimension of the hidden layer in a 3-layer NN')
+	activ_help = 'Activation function for the middle layer, choose from '
 	parser.add_argument('-a', '--activation', type=str, \
 		default=default_activation, choices = ACTIVATION_FUNCTIONS.keys(), \
-		help='Activation function for the middle layer, choose from ' + str(ACTIVATION_FUNCTIONS.keys()))
+		help=activ_help + str(ACTIVATION_FUNCTIONS.keys()))
 	parser.add_argument('-p', '--past_scope', type=int, \
 		default=default_past_scope, \
 		help='Number of hours used for each iteration of the sliding window')
@@ -160,15 +159,6 @@ def parse_nn_input():
 	parser.add_argument('-i', '--num_iterations', type=int, \
 		default=default_num_iterations, \
 		help='Number of iterations/passes over the training data')
-	parser.add_argument('-f', '--future_scope', type=int, \
-		default=default_future_scope, \
-		help='Number of points in the future to test for in the test set, starting from the initial chunk')
-	parser.add_argument('-c', '--chemical', default=None, \
-		choices=pollutant_names, \
-		help='Pollutant to graph/output time series for, choose from ' + str(pollutant_names))
-	parser.add_argument('-n', '--norm', default=default_norm, \
-		choices=NORM_FUNCTIONS.keys(), \
-		help='Loss function to use for gradient descent, choose from ' + str(NORM_FUNCTIONS.keys()))
 	parser.add_argument('-s', '--step_scale', type=float, \
 		default=default_step_scale, \
 		help='The value with which to scale the step size')
@@ -177,51 +167,8 @@ def parse_nn_input():
 	args.pollution_dir_train = remove_slash(args.pollution_dir_train)
 	reg_params = { 'W1': args.reg_w1, 'b1': args.reg_b1, 'W2': args.reg_w2, \
 		'b2': args.reg_b2, 'U': args.reg_u }
-	return (args.pollution_dir_train, args.pollution_dir_test, args.hidden_dim, \
-		args.activation, args.past_scope, reg_params, args.num_iterations, \
-		args.future_scope, args.chemical, args.norm, args.step_scale)
-
-def parse_csv_input():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('pollution_csv', type=argparse.FileType('r'), \
-		help='CSV file with the pollution data')
-	args = parser.parse_args()
-	return args.pollution_csv
-
-def parse_new_data_input():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('pollution_csv', type=argparse.FileType('r'), \
-		help='CSV file with the pollution data')
-	parser.add_argument('new_csv', type=argparse.FileType('w'), \
-		help='CSV file containing the new data')
-	args = parser.parse_args()
-	return args.pollution_csv, args.new_csv
-
-def parse_new_directory_input():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('pollution_csv', type=argparse.FileType('r'), \
-		help='CSV file with the pollution data')
-	parser.add_argument('new_dir', type=str, \
-		help='Directory containing the new data')
-	args = parser.parse_args()
-	return args.pollution_csv, args.new_dir
-
-def parse_prediction_input():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('pollution_dir_train', type=str, \
-		help='Directory with the train pollution data')
-	parser.add_argument('pollution_dir_test', type=str, \
-		help='Directory with the test pollution data')
-	parser.add_argument('-d', '--hidden_dim', type=int, \
-		default=default_hidden_dim, \
-		help='Dimension of the hidden layer in a 3-layer NN')
-	parser.add_argument('-f', '--future_scope', type=int, \
-		default=default_future_scope, \
-		help='Number of points in the future to test for in the test set, starting from the initial chunk')
-	parser.add_argument('-p', '--pollutant', default=None, \
-		help='Pollutant to graph/output time series for')
-	args = parser.parse_args()
-	return (args.pollution_dir_train, args.pollution_dir_test, args.hidden_dim, \
-	 args.future_scope, args.pollutant)
-
+	hyper = NetHyperparams(args.hidden_dim, args.activation, args.past_scope, \
+		reg_params, args.num_iterations, args.future_scope, args.norm, \
+		args.step_scale)
+	return (args.pollution_dir_train, args.pollution_dir_test, hyper, args.chemical)
 
