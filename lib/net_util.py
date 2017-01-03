@@ -4,7 +4,6 @@ a variety of useful functions for building neural nets
 
 import math
 import numpy as np
-import math
 import input_util
 import test_util
 import net_prediction
@@ -12,7 +11,7 @@ import feed_forward_nn
 import elman_rnn
 from nn_globals import OUTPUT_DIM, NUM_VARS
 
-def stochastic_gradient_descent(loss_func, arg_names, loss_func_grad, train_data, \
+def stochastic_gradient_descent(loss_func, loss_func_grad, train_data, \
     input_dim, output_dim, model, possible_update, hyper, verbose = 0, verbose_n = 1):
     """Runs stochastic gradient descent
 
@@ -65,9 +64,9 @@ def stochastic_gradient_descent(loss_func, arg_names, loss_func_grad, train_data
 
             num_updates += 1
             eta = hyper.step_scale / (math.sqrt(num_updates))
-            for i in range(len(arg_names)):
-                grad = loss_func_grad[i](input_data, correct_output_data, model, average_levels, hyper)
-                model[arg_names[i]] -= eta * grad 
+            for param in loss_func_grad:
+                grad = loss_func_grad[param](input_data, correct_output_data, model, average_levels, hyper)
+                model[param] -= eta * grad 
 
             possible_update(model, input_data)
 
@@ -105,24 +104,22 @@ def run_neural_net(pollution_data_list, hyper, has_feedback, verbose, verbose_n)
         pollution_data_list, hyper.past_scope)
 
     train_data = zip(input_vectors, output_vectors)
-    param_names = ['W1', 'b1', 'W2', 'b2']
     input_dim = NUM_VARS * hyper.past_scope
     W1 = np.random.randn(hyper.hidden_dim, input_dim) / np.sqrt(input_dim)
     b1 = np.zeros((hyper.hidden_dim, 1))
     W2 = np.random.randn(OUTPUT_DIM, hyper.hidden_dim) / np.sqrt(hyper.hidden_dim)
     b2 = np.zeros((OUTPUT_DIM, 1))
-    model = { 'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2}
+    model = {'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2}
     if not has_feedback:
         loss_gradients = feed_forward_nn.get_loss_gradients()
         update = feed_forward_nn.none_func
     else:
         loss_gradients = elman_rnn.get_loss_gradients()
         update = elman_rnn.update
-        param_names.append('U')
         U = np.random.randn(hyper.hidden_dim, hyper.hidden_dim) / np.sqrt(hyper.hidden_dim)
         h = [np.zeros((hyper.hidden_dim, 1))]
         model.update({'U': U, 'h': h})
-    return stochastic_gradient_descent(calculate_loss, param_names, \
+    return stochastic_gradient_descent(calculate_loss, \
         loss_gradients, train_data, input_dim, OUTPUT_DIM, model, update, hyper, \
         verbose=verbose, verbose_n=verbose_n)
 

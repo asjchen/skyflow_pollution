@@ -369,7 +369,14 @@ def update(model, input_data):
 	model['h'].append(z2)
 
 def get_loss_gradients():
-	return [loss_gradient_W1, loss_gradient_b1, loss_gradient_W2, loss_gradient_b2, loss_gradient_U]
+	loss_gradients = {
+		'W1': loss_gradient_W1, \
+		'b1': loss_gradient_b1, \
+		'W2': loss_gradient_W2, \
+		'b2': loss_gradient_b2, \
+		'U' : loss_gradient_U
+	}
+	return loss_gradients
 
 
 

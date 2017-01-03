@@ -179,6 +179,11 @@ def process_data_set(pollution_data_list, num_hours_used):
 def none_func(x, y): return
 
 def get_loss_gradients():
-	return [loss_gradient_W1, loss_gradient_b1, loss_gradient_W2, loss_gradient_b2]
-
+	loss_gradients = {
+		'W1': loss_gradient_W1, \
+		'b1': loss_gradient_b1, \
+		'W2': loss_gradient_W2, \
+		'b2': loss_gradient_b2
+	}
+	return loss_gradients
  
