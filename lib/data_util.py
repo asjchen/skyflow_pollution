@@ -3,10 +3,6 @@ import csv
 import re
 from pollution_hour import PollutionHour
 
-pollutant_names = ['CO', 'NO', 'NO2', 'NOx', 'O3', 'PM10', 'PM2.5', 'SO2']
-weather_names = ['AMB_TEMP', 'RAINFALL', 'RH', 'WD_HR', 'WIND_DIREC', \
-	'WIND_SPEED', 'WS_HR']
-
 def remove_slash(name):
 	if name[-1] == '/':
 		return name[: -1]
@@ -18,8 +14,9 @@ def parse_taiwanese_csv(csv_file, include_invalid = False, \
 	reader = [line for line in reader if len(line) > 1]
 	csv_file.close()
 	# specific to the Taiwanese CSV data file
-	global pollutant_names
-	global weather_names
+	pollutant_names = ['CO', 'NO', 'NO2', 'NOx', 'O3', 'PM10', 'PM2.5', 'SO2']
+	weather_names = ['AMB_TEMP', 'RAINFALL', 'RH', 'WD_HR', 'WIND_DIREC', \
+		'WIND_SPEED', 'WS_HR']
 	headers = [name for name \
 		in reader[0] if name in pollutant_names or name in weather_names]
 	headers = ['time', 'station'] + headers
@@ -76,3 +73,4 @@ def data_from_directory(pollution_dir):
 			pollution_data_list.append(parse_taiwanese_csv(pollution_csv))
 			pollution_csv.close()
 	return pollution_data_list
+
