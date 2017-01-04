@@ -1,5 +1,7 @@
-# Class to contain a row of pollution data
-# Attributes include date, hour, average hourly levels of O3, NO2, CO, etc
+"""
+Class to contain a row of pollution data
+Attributes include date, hour, average hourly levels of O3, NO2, CO, etc
+"""
 
 import argparse
 from datetime import datetime

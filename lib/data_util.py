@@ -1,3 +1,7 @@
+"""
+Functions that process CSV data
+"""
+
 import os
 import csv
 import re

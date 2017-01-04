@@ -1,4 +1,6 @@
-# Functions for parsing argparse input
+"""
+Functions for parsing argparse input
+"""
 
 import argparse
 import net_util

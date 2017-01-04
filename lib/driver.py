@@ -1,3 +1,7 @@
+"""
+Main driver -- run this to execute the algorithms
+"""
+
 import input_util
 
 def main():	

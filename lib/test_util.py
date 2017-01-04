@@ -1,4 +1,6 @@
-# Functions for testing
+"""
+Functions for evaluating algorithms and error
+"""
 
 import numpy as np
 from nn_globals import NORM_FUNCTIONS
