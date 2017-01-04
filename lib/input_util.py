@@ -129,7 +129,7 @@ def parse_oracle_input():
 		help='Directory with the test pollution data')
 	parser.add_argument('-r', '--radius', type=int, \
 		default=default_past_scope, \
-		help='Radius of points around the target data point to interpolate from')
+		help='Radius around the target data point to interpolate from')
 	args = parser.parse_args()
 	args.pollution_dir_test = remove_slash(args.pollution_dir_test)
 	return (args.pollution_dir_test, args.radius, args.future_scope, \
@@ -140,7 +140,8 @@ def parse_nn_input():
 	top_parser = argparse.ArgumentParser(description=nn_descr)
 	subparsers = top_parser.add_subparsers(title='subcommands',
 		description='valid subcommands', help='Neural network types')
-	forward_parser = subparsers.add_parser('feed-forward', help='Feed-Forward NN')
+	forward_parser = subparsers.add_parser('feed-forward', 
+		help='Feed-Forward NN')
 	forward_parser.set_defaults(has_feedback=False)
 	elman_parser = subparsers.add_parser('elman', help='Elman RNN')
 	elman_parser.set_defaults(has_feedback=True)
@@ -157,11 +158,12 @@ def parse_nn_input():
 			help='Dimension of the hidden layer in a 3-layer NN')
 		activ_help = 'Activation function for the middle layer, choose from '
 		parser.add_argument('-a', '--activation', type=str, \
-			default=default_activation, choices = ACTIVATION_FUNCTIONS.keys(), \
+			default=default_activation, \
+			choices = ACTIVATION_FUNCTIONS.keys(), \
 			help=activ_help + str(ACTIVATION_FUNCTIONS.keys()))
 		parser.add_argument('-p', '--past_scope', type=int, \
 			default=default_past_scope, \
-			help='Number of hours used for each iteration of the sliding window')
+			help='Number of hours in for each iteration of the sliding window')
 		parser.add_argument('--reg_w1', type=float, default=0.0, 
 			help='Regularization parameter for W1')
 		parser.add_argument('--reg_b1', type=float, default=0.0, 
@@ -181,11 +183,11 @@ def parse_nn_input():
 	args = top_parser.parse_args()
 	args.pollution_dir_test = remove_slash(args.pollution_dir_test)
 	args.pollution_dir_train = remove_slash(args.pollution_dir_train)
+	pollution_dirs = (args.pollution_dir_train, args.pollution_dir_test)
 	reg_params = { 'W1': args.reg_w1, 'b1': args.reg_b1, 'W2': args.reg_w2, \
 		'b2': args.reg_b2, 'U': args.reg_u }
 	hyper = NetHyperparams(args.hidden_dim, args.activation, args.past_scope, \
 		reg_params, args.num_iterations, args.future_scope, args.norm, \
 		args.step_scale)
-	return (args.has_feedback, args.pollution_dir_train, \
-		args.pollution_dir_test, hyper, args.chemical)
+	return (args.has_feedback, pollution_dirs, hyper, args.chemical)
 

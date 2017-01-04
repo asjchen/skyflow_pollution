@@ -1,5 +1,5 @@
 """
-a variety of useful functions for building neural nets
+Functions common to both neural networks
 """
 
 import math
@@ -11,8 +11,8 @@ import feed_forward_nn
 import elman_rnn
 from nn_globals import OUTPUT_DIM, NUM_VARS
 
-def stochastic_gradient_descent(loss_func, loss_func_grad, train_data, \
-    input_dim, output_dim, model, possible_update, hyper, verbose = 0, verbose_n = 1):
+def stochastic_gradient_descent(network_setup, train_data, model, \
+    verbose=2, verbose_n=4):
     """Runs stochastic gradient descent
 
     @param loss_func:       full loss based on the whole data set
@@ -25,7 +25,6 @@ def stochastic_gradient_descent(loss_func, loss_func_grad, train_data, \
     @param activation:      the name of the activation of the middle layer
                             (where each array is an np arrays)
     @param num_iterations:   number of iterations to run gradient descent
-    @param input_dim:       dimension of input layer
     @param output_dim:      dimension of output layer
     @param hidden_dim:      dimension of hidden layer
     @param possible_update: possible update to run at each iteration (passed model and the input)
@@ -37,13 +36,14 @@ def stochastic_gradient_descent(loss_func, loss_func_grad, train_data, \
     """
 
     # Compute average levels
-
+    loss_func, loss_func_grad, possible_update, hyper = network_setup
     temp = []
     for elem in zip(*train_data)[0]:
         if elem != None:
             temp.append(elem)
     temp_np = np.array(temp)
 
+    output_dim = model['b2'].shape[0]
     data_len = float(len(temp))
     divisor_vector = np.zeros((output_dim, 1))
     divisor_vector.fill(data_len)
@@ -83,7 +83,7 @@ def stochastic_gradient_descent(loss_func, loss_func_grad, train_data, \
         average_levels, possible_update, hyper)
     return (model, final_loss)
 
-def run_neural_net(pollution_data_list, hyper, has_feedback, verbose, verbose_n):
+def run_neural_net(pollution_data_list, hyper, has_feedback):
     """ Runs the neural net on pollution_data
     
     @param pollution_data_list: list of pollutionHour objects representing all
@@ -119,13 +119,11 @@ def run_neural_net(pollution_data_list, hyper, has_feedback, verbose, verbose_n)
         U = np.random.randn(hyper.hidden_dim, hyper.hidden_dim) / np.sqrt(hyper.hidden_dim)
         h = [np.zeros((hyper.hidden_dim, 1))]
         model.update({'U': U, 'h': h})
-    return stochastic_gradient_descent(calculate_loss, \
-        loss_gradients, train_data, input_dim, OUTPUT_DIM, model, update, hyper, \
-        verbose=verbose, verbose_n=verbose_n)
+    network_setup = (calculate_loss, loss_gradients, update, hyper)
+    return stochastic_gradient_descent(network_setup, train_data, model)
 
-def test_module(pollution_dir_train, pollution_dir_test, hyper, has_feedback, \
-    verbose = 2, verbose_n = 4):
-    
+def test_module(pollution_dirs, hyper, has_feedback):
+    pollution_dir_train, pollution_dir_test = pollution_dirs
     if not has_feedback:
         calculate_loss = feed_forward_nn.calculate_loss
         process_data_set = feed_forward_nn.process_data_set
@@ -140,8 +138,7 @@ def test_module(pollution_dir_train, pollution_dir_test, hyper, has_feedback, \
 
     # TEST SET
     pollution_data_list_test = input_util.data_from_directory(pollution_dir_test)
-    (model, loss) = run_neural_net(pollution_data_list_train, hyper, has_feedback, \
-        verbose, verbose_n)
+    (model, loss) = run_neural_net(pollution_data_list_train, hyper, has_feedback)
 
     print 'PROCESSING TRAIN SET'
     (train_inputs, train_outputs) = process_data_set(
@@ -191,18 +188,18 @@ def test_module(pollution_dir_train, pollution_dir_test, hyper, has_feedback, \
 
 def train_nn():
     input_args = input_util.parse_nn_input()
-    (has_feedback, pollution_dir_train, pollution_dir_test, hyper, pollutant) = input_args
+    (has_feedback, pollution_dirs, hyper, pollutant) = input_args
+    pollution_dir_train, pollution_dir_test = pollution_dirs
     test_data_set = input_util.data_from_directory(pollution_dir_test)
     print 'READING DATA COMPLETE'
-    model = test_module(pollution_dir_train, pollution_dir_test, hyper, \
-        has_feedback, verbose = 2, verbose_n = 1)
+    model = test_module(pollution_dirs, hyper, has_feedback)
     errors = np.zeros((hyper.future_scope,))
     for test_data in test_data_set:
+        scopes = (hyper.past_scope, hyper.future_scope)
         actual_levels = net_prediction.isolate_pollutant_series(
-            test_data, pollutant, hyper.past_scope, hyper.future_scope)
+            test_data, pollutant, scopes)
         predicted_levels = net_prediction.predict_next_nn_points(
-            model, test_data, pollutant, hyper.past_scope, \
-            hyper.future_scope, hyper.activation, feedback = has_feedback)
+            model, test_data, pollutant, hyper, has_feedback)
         err = test_util.evaluate_error(
             predicted_levels, actual_levels, hyper.norm)
         for j in range(hyper.future_scope):

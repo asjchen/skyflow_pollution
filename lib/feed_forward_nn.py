@@ -165,12 +165,14 @@ def process_data_set(pollution_data_list, num_hours_used):
 				pollution_data[i + num_hours_used]))
 			if len(input_vec) == 0:
 				for j in range(num_hours_used):
-					input_vec = input_vec + get_variables(pollution_data[i + j])
+					input_vars = get_variables(pollution_data[i + j])
+					input_vec += input_vars
 			else:
 				input_vec = input_vec[NUM_VARS: ] + get_variables(
 					pollution_data[i + num_hours_used - 1])
 			input_vectors.append(input_vec)
-	input_vectors = [np.array(v).reshape((NUM_VARS * num_hours_used, 1)) for v \
+	input_dim = NUM_VARS * num_hours_used
+	input_vectors = [np.array(v).reshape((input_dim, 1)) for v \
 		in input_vectors]
 	output_vectors = [np.array(v).reshape((OUTPUT_DIM, 1)) for v \
 		in output_vectors]

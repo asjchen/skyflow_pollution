@@ -174,7 +174,8 @@ def loss_gradient_b1(input_data, correct_output_data, model, avg_levels, hyper):
 			ith_diag = U[k: (k + 1), k: (k + 1)]
 			diagonal_elems[k] = ith_diag 
 		# check the last argument to dz2_db1
-		db1_deriv = dz2_db1(model, input_data, hyper.activation, len(model['h']) - 2) 
+		db1_deriv = dz2_db1(model, input_data, hyper.activation, \
+			len(model['h']) - 2) 
 		u_comp = 1 + diagonal_elems * db1_deriv
 
 		# Update gradient
@@ -244,7 +245,8 @@ def loss_gradient_W1(input_data, correct_output_data, model, avg_levels, hyper):
 			kth_diag = U[k: (k + 1), k: (k + 1)]
 			for l in range(len(input_data)):
 				diagonal_elems[k][l] = kth_diag 
-		dW1_deriv = dz2_dW1(model, input_data, hyper.activation, len(model['h']) - 2)
+		dW1_deriv = dz2_dW1(model, input_data, hyper.activation, \
+			len(model['h']) - 2)
 		u_comp = k_comp + (diagonal_elems * dW1_deriv)
 		gradient += mult_vector * (j_comp * u_comp)
 	gradient += hyper.reg_params['W1'] * W1 
@@ -309,7 +311,8 @@ def loss_gradient_U(input_data, correct_output_data, model, avg_levels, hyper):
 			for l in range(U.shape[1]):
 				diagonal_elems[k][l] = kth_diag 
 
-		dU_deriv = dz2_dU(model, input_data, hyper.activation, len(model['h']) - 2)
+		dU_deriv = dz2_dU(model, input_data, hyper.activation, \
+			len(model['h']) - 2)
 		u_comp = k_comp + (diagonal_elems * dU_deriv)
 
 		gradient += mult_vector * (j_comp * u_comp)
@@ -334,13 +337,16 @@ def process_data_set(pollution_data_list, num_hours_used):
 			continue
 		input_vec = []
 		for i in range(len(pollution_data) - num_hours_used):
-			output_vectors.append(get_pollutants(pollution_data[i + num_hours_used]))
+			input_poll = get_pollutants(pollution_data[i + num_hours_used])
+			output_vectors.append(input_poll)
 			if len(input_vec) == 0:
 				for j in range(num_hours_used):
-					input_vec = input_vec + get_variables(pollution_data[i + j])
+					input_vars = get_variables(pollution_data[i + j])
+					input_vec += input_vars
 			else:
-				input_vec = input_vec[NUM_VARS: ] + get_variables(
-					pollution_data[i + num_hours_used - 1])
+				data_chunk = pollution_data[i + num_hours_used - 1]
+				input_vars = get_variables(data_chunk)
+				input_vec = input_vec[NUM_VARS: ] + input_vars
 			input_vectors.append(input_vec)
 		input_vectors.append(None) #indicator
 		output_vectors.append(None)
@@ -364,7 +370,8 @@ def process_data_set(pollution_data_list, num_hours_used):
 	return (input_vectors, output_vectors)
 
 def update(model, input_data):
-	z1 = (model['W1'].dot(input_data) + model['b1']) + model['U'].dot(model['h'][-1])
+	W1, b1, U, h = model['W1'], model['b1'], model['U'], model['h']
+	z1 = (W1.dot(input_data) + b1) + U.dot(h[-1])
 	z2 = np.tanh(z1)
 	model['h'].append(z2)
 

@@ -1,4 +1,6 @@
-# Neural Net Global Vars
+"""
+Neural Net Global Variables
+"""
 
 import numpy as np
 
@@ -26,7 +28,8 @@ def predict_nn(model, input_vector, activation):
 	return W2.dot(z2) + b2
 
 def predict_nn_with_feedback(model, input_vector, activation):
-	W1, b1, W2, b2, U, h = model['W1'], model['b1'], model['W2'], model['b2'], model['U'], model['h']
+	W1, b1, W2, b2 = model['W1'], model['b1'], model['W2'], model['b2']
+	U, h = model['U'], model['h']
 	z1 = (W1.dot(input_vector) + b1) + U.dot(h)
 	z2 = ACTIVATION_FUNCTIONS[activation](z1) 
 	model['h'] = z2
@@ -64,8 +67,20 @@ def softplus(X):
 def softplus_grad(X):
 	return 1.0 / (1 + np.exp(-1 * X))
 
-ACTIVATION_FUNCTIONS = { 'tanh': tanh, 'arctan': arctan, 'relu': relu, 'identity': identity, 'softplus': softplus }
-ACTIVATION_GRADIENTS = { 'tanh': tanh_grad, 'arctan': arctan_grad, 'relu': relu_grad, 'identity': identity_grad, 'softplus': softplus_grad }
+ACTIVATION_FUNCTIONS = { \
+	'tanh': tanh, \
+	'arctan': arctan, \
+	'relu': relu, \
+	'identity': identity, \
+	'softplus': softplus, \
+}
+ACTIVATION_GRADIENTS = { \
+	'tanh': tanh_grad, \
+	'arctan': arctan_grad, \
+	'relu': relu_grad, \
+	'identity': identity_grad, \
+	'softplus': softplus_grad, \
+}
 
 def L1(predicted_levels, actual_levels, avg_levels):
 	abs_diff = np.absolute(predicted_levels - actual_levels)
