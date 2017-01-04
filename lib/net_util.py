@@ -6,7 +6,6 @@ import math
 import numpy as np
 import data_util
 import test_util
-import net_prediction
 import feed_forward_nn
 import elman_rnn
 from nn_globals import NetHyperparams

@@ -1,6 +1,7 @@
-# Prediction Module
+"""
+Functions to predict the next few hours' worth of data
+"""
 
-from pollution_hour import PollutionHour
 import numpy as np
 from feed_forward_nn import process_data_set
 from nn_globals import predict_nn, predict_nn_with_feedback
@@ -12,15 +13,15 @@ def predict_next_points(next_pred, test_vectors, scopes):
 	(input_vectors, output_vectors) = test_vectors
 	curr_input = input_vectors[0]
 	predictions = []
-	for i in range(future_scope):
+	for i in xrange(future_scope):
 		predictions.append(next_pred(curr_input))
 		if i < len(input_vectors) - 1:
 			curr_input = input_vectors[i + 1]
-			for k in range(i + 1):
+			for k in xrange(i + 1):
 				if k < num_hours_used:
 					# depends on the fact that each input vector is 
 					# [<pollutant data> + <weather data>]
-					for j in range(OUTPUT_DIM):
+					for j in xrange(OUTPUT_DIM):
 						update_idx = -NUM_VARS * (k + 1) + j
 						curr_input[update_idx] = predictions[-k - 1][j]
 	return predictions
@@ -53,11 +54,11 @@ def predict_next_linear_points(pollution_data, pollutant, scopes):
 	def next_linear_prediction(curr_input):
 		num_single_features = len(curr_input) / past_scope
 		series = []
-		for i in range(num_single_features):
+		for i in xrange(num_single_features):
 			series.append([curr_input[j][0] for j \
-				in range(i, len(curr_input), num_single_features)])
+				in xrange(i, len(curr_input), num_single_features)])
 		next_point = np.zeros((num_single_features, 1))
-		for i in range(num_single_features):
+		for i in xrange(num_single_features):
 			x_coords = range(len(series[i]))
 			regression = scipy.stats.linregress(x_coords, series[i])
 			slope = regression[0]
@@ -80,20 +81,20 @@ def predict_middle_points(pollution_data, pollutant, scopes):
 	if pollutant != None:
 		pollutant_idx = sorted_pollutants.index(pollutant)
 	predictions = []
-	for i in range(future_scope):
+	for i in xrange(future_scope):
 		num_single_features = input_vectors[i].shape[0] / total_scope
 		both_series = [[input_vectors[i][k] for k \
-			in range(j, len(input_vectors[i]), num_single_features)] for j \
-			in range(num_single_features)]
+			in xrange(j, len(input_vectors[i]), num_single_features)] for j \
+			in xrange(num_single_features)]
 		left_series = [series[: num_hours_used] for series in both_series]
 		right_series = [series[num_hours_used + 1: ] for series in both_series]
 		x_vals = range(num_hours_used) + range(num_hours_used + 1, total_scope)
 		predictions.append(np.zeros((num_single_features, 1)))
-		for j in range(num_single_features):
+		for j in xrange(num_single_features):
 			y_vals = left_series[j] + right_series[j]
 			quad_model = np.polyfit(np.array(x_vals), np.array(y_vals), 2)
 			predictions[i][j] = 0.0
-			for k in range(3):
+			for k in xrange(3):
 				predictions[i][j] += quad_model[2 - k] * (num_hours_used ** k)
 	if pollutant != None:
 		return [output[pollutant_idx] for output in predictions]

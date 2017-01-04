@@ -7,7 +7,6 @@ regression on the last [past_scope] hours for each pollutant.
 
 import data_util
 import test_util
-import numpy as np
 
 def evaluate_baseline(pollution_dir_test, past_scope, future_scope, pollutant, norm):
 	test_data_set = data_util.data_from_directory(pollution_dir_test)

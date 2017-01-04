@@ -6,8 +6,7 @@ import argparse
 import net_util
 import baseline
 import oracle
-from nn_globals import NORM_FUNCTIONS, NORM_GRADIENTS
-from nn_globals import ACTIVATION_FUNCTIONS, ACTIVATION_GRADIENTS
+from nn_globals import NORM_FUNCTIONS, ACTIVATION_FUNCTIONS
 
 default_past_scope = 12
 default_future_scope = 12

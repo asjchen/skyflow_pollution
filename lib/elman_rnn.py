@@ -13,11 +13,11 @@ Output:             z_3
 
 where W_1, b_1, W_2, b_2, U are parameters to be tuned, and h(t) allows for 
 the recurrence. Here, we saw that the "softmax" function performed best as
-the activation function in the middle layer.
+the activation function in the middle layer, with the appropriate step size.
 """
 
 import numpy as np
-from nn_globals import predict_nn, OUTPUT_DIM, NUM_VARS, NUM_POLLUTANTS
+from nn_globals import OUTPUT_DIM, NUM_VARS, NUM_POLLUTANTS
 from nn_globals import NORM_FUNCTIONS, NORM_GRADIENTS
 from nn_globals import ACTIVATION_FUNCTIONS, ACTIVATION_GRADIENTS
 from pollution_hour import get_pollutants, get_variables
@@ -46,7 +46,7 @@ def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 		possible_update(model, X)
 	
 	if print_loss_vector:
-		for i in range(NUM_POLLUTANTS):
+		for i in xrange(NUM_POLLUTANTS):
 			loss_vector[i] /= len(all_input_data)
 		print "Loss Vector: \n", loss_vector
 
@@ -111,7 +111,7 @@ def dz2_db1(model, input_data, activation, i):
 
 	# Else: dz2/db1 = dz2/dz1 * dz1/db1 = dz2/dz1 * (1 + U * dz2/db1)
 	diagonal_elems = np.zeros(b1.shape)
-	for j in range(b1.shape[0]):
+	for j in xrange(b1.shape[0]):
 		ith_diag = U[j: (j + 1), j: (j + 1)]
 		diagonal_elems[j] = ith_diag 
 	db1_deriv = dz2_db1(model, input_data, activation, i-1)
@@ -129,14 +129,14 @@ def loss_gradient_b1(input_data, correct_output_data, model, avg_levels, hyper):
 	predicted_levels = W2.dot(z2) + b2
 	mults = NORM_GRADIENTS[hyper.norm](
 		predicted_levels, correct_output_data, avg_levels)
-	for i in range(OUTPUT_DIM):
+	for i in xrange(OUTPUT_DIM):
 		mult_vector = np.repeat(mults[i].reshape((1, 1)), b1.shape[0], axis=0)
 		z_comp = ACTIVATION_GRADIENTS[hyper.activation](z1)
 		w_comp = np.transpose(W2[i: (i + 1), :])
 		
 		# compute (1 + U * dz2/db1) factor
 		diagonal_elems = np.zeros(b1.shape)
-		for k in range(b1.shape[0]): 
+		for k in xrange(b1.shape[0]): 
 			ith_diag = U[k: (k + 1), k: (k + 1)]
 			diagonal_elems[k] = ith_diag 
 		# check the last argument to dz2_db1
@@ -178,9 +178,9 @@ def dz2_dW1(model, input_data, activation, i):
 
 	# Else: dz2/db1 = dz2/dz1 * dz1/db1 = dz2/dz1 * (1 + U * dz2/db1)
 	diagonal_elems = np.zeros(W1.shape)
-	for k in range(U.shape[0]):
+	for k in xrange(U.shape[0]):
 		kth_diag = U[k: (k + 1), k: (k + 1)]
-		for l in range(len(input_data)):
+		for l in xrange(len(input_data)):
 			diagonal_elems[k][l] = kth_diag  
 	dW1_deriv = dz2_dW1(model, input_data, activation, i-1)
 	u_comp = j_comp * (k_comp + (diagonal_elems * dW1_deriv))
@@ -196,7 +196,7 @@ def loss_gradient_W1(input_data, correct_output_data, model, avg_levels, hyper):
 	predicted_levels = W2.dot(z2) + b2
 	mults = NORM_GRADIENTS[hyper.norm](
 		predicted_levels, correct_output_data, avg_levels)
-	for i in range(OUTPUT_DIM):
+	for i in xrange(OUTPUT_DIM):
 		mult_vector = np.tile(mults[i].reshape((1, 1)), W1.shape)
 		
 		# compute W_(2,i,j) * (1 - (z_(2,j))^2)
@@ -207,9 +207,9 @@ def loss_gradient_W1(input_data, correct_output_data, model, avg_levels, hyper):
 		# compute x_(t,k) + U_(j,j) * dh_(t-1,j)/dW1_(j,k)
 		k_comp = np.repeat(np.transpose(input_data), W1.shape[0], axis=0)
 		diagonal_elems = np.zeros(W1.shape)
-		for k in range(U.shape[0]):
+		for k in xrange(U.shape[0]):
 			kth_diag = U[k: (k + 1), k: (k + 1)]
-			for l in range(len(input_data)):
+			for l in xrange(len(input_data)):
 				diagonal_elems[k][l] = kth_diag 
 		dW1_deriv = dz2_dW1(model, input_data, hyper.activation, \
 			len(model['h']) - 2)
@@ -246,9 +246,9 @@ def dz2_dU(model, input_data, activation, i):
 
 	# Else: dz2/db1 = dz2/dz1 * dz1/db1 = dz2/dz1 * (1 + U * dz2/db1)
 	diagonal_elems = np.zeros(U.shape)
-	for k in range(U.shape[0]):
+	for k in xrange(U.shape[0]):
 		kth_diag = U[k: (k + 1), k: (k + 1)]
-		for l in range(U.shape[1]):
+		for l in xrange(U.shape[1]):
 			diagonal_elems[k][l] = kth_diag  
 	dU_deriv = dz2_dU(model, input_data, activation, i - 1)
 	u_comp = j_comp * (k_comp + (diagonal_elems * dU_deriv))
@@ -264,7 +264,7 @@ def loss_gradient_U(input_data, correct_output_data, model, avg_levels, hyper):
 	predicted_levels = W2.dot(z2) + b2
 	mults = NORM_GRADIENTS[hyper.norm](
 		predicted_levels, correct_output_data, avg_levels)
-	for i in range(OUTPUT_DIM):
+	for i in xrange(OUTPUT_DIM):
 		mult_vector = np.tile(mults[i].reshape((1, 1)), U.shape)
 		w_col = np.transpose(W2[i: (i + 1), :])
 		j_col = ACTIVATION_GRADIENTS[hyper.activation](z1) * w_col
@@ -272,9 +272,9 @@ def loss_gradient_U(input_data, correct_output_data, model, avg_levels, hyper):
 		k_comp = np.repeat(np.transpose(h), U.shape[0], axis=0)
 		
 		diagonal_elems = np.zeros(U.shape)
-		for k in range(U.shape[0]):
+		for k in xrange(U.shape[0]):
 			kth_diag = U[k: (k + 1), k: (k + 1)]
-			for l in range(U.shape[1]):
+			for l in xrange(U.shape[1]):
 				diagonal_elems[k][l] = kth_diag 
 
 		dU_deriv = dz2_dU(model, input_data, hyper.activation, \
@@ -292,11 +292,11 @@ def process_data_set(pollution_data_list, num_hours_used):
 		if len(pollution_data) <= num_hours_used:
 			continue
 		input_vec = []
-		for i in range(len(pollution_data) - num_hours_used):
+		for i in xrange(len(pollution_data) - num_hours_used):
 			input_poll = get_pollutants(pollution_data[i + num_hours_used])
 			output_vectors.append(input_poll)
 			if len(input_vec) == 0:
-				for j in range(num_hours_used):
+				for j in xrange(num_hours_used):
 					input_vars = get_variables(pollution_data[i + j])
 					input_vec += input_vars
 			else:

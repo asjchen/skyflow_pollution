@@ -13,7 +13,7 @@ Output:             z_3
 
 where W_1, b_1, W_2, b_2 are parameters to be tuned. Here, we saw that the 
 "softmax" function performed best as the activation function in the middle 
-layer.
+layer, with the appropriate step size.
 """
 
 import numpy as np
@@ -44,7 +44,7 @@ def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 			total_reg += reg_const * 0.5 * (np.linalg.norm(model[param]) ** 2) 
 
 	if print_loss_vector:
-		for i in range(NUM_POLLUTANTS):
+		for i in xrange(NUM_POLLUTANTS):
 			loss_vector[i] = loss_vector[i] / len(all_input_data)
 		print "Loss _vector: \n", loss_vector
 
@@ -83,7 +83,7 @@ def loss_gradient_b1(input_data, correct_output_data, model, avg_levels, hyper):
 	predicted_levels = W2.dot(z2) + b2
 	mults = NORM_GRADIENTS[hyper.norm](
 		predicted_levels, correct_output_data, avg_levels)
-	for i in range(OUTPUT_DIM):
+	for i in xrange(OUTPUT_DIM):
 		mult_vector = np.repeat(mults[i].reshape((1, 1)), b1.shape[0], axis=0)
 		z_comp = ACTIVATION_GRADIENTS[hyper.activation](z1)
 		w_comp = np.transpose(W2[i: (i + 1), :])
@@ -99,7 +99,7 @@ def loss_gradient_W1(input_data, correct_output_data, model, avg_levels, hyper):
 	predicted_levels = W2.dot(z2) + b2
 	mults = NORM_GRADIENTS[hyper.norm](
 		predicted_levels, correct_output_data, avg_levels)
-	for i in range(OUTPUT_DIM):
+	for i in xrange(OUTPUT_DIM):
 		mult_vector = np.tile(mults[i].reshape((1, 1)), W1.shape)
 		w_col = np.transpose(W2[i: (i + 1), :])
 		j_col = ACTIVATION_GRADIENTS[hyper.activation](z1) * w_col
@@ -116,11 +116,11 @@ def process_data_set(pollution_data_list, num_hours_used):
 		if len(pollution_data) <= num_hours_used:
 			continue
 		input_vec = []
-		for i in range(len(pollution_data) - num_hours_used):
+		for i in xrange(len(pollution_data) - num_hours_used):
 			output_vectors.append(get_pollutants(
 				pollution_data[i + num_hours_used]))
 			if len(input_vec) == 0:
-				for j in range(num_hours_used):
+				for j in xrange(num_hours_used):
 					input_vars = get_variables(pollution_data[i + j])
 					input_vec += input_vars
 			else:

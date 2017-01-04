@@ -27,7 +27,7 @@ def parse_taiwanese_csv(csv_file, include_invalid = False, \
 	pollution_data = []
 	row_idx = dict([(name, reader[0].index(name)) for name \
 		in pollutant_names + weather_names])
-	for i in range(1, len(reader)):
+	for i in xrange(1, len(reader)):
 		if i % 1000 == 0:
 			print i
 		chron = reader[i][0]

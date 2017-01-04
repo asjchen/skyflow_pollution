@@ -11,7 +11,7 @@ def evaluate_error(predicted, actual, norm):
 	avg_levels = sum(actual) / float(len(actual))
 	loss = NORM_FUNCTIONS[norm]
 	diffs = [sum(loss(predicted[i], actual[i], avg_levels)) for i \
-		in range(len(predicted))]
+		in xrange(len(predicted))]
 	return [diff / (predicted[0].shape[0]) for diff in diffs]
 
 def evaluate_algorithm(scopes, algo, test_data_set, pollutant, norm, \
@@ -38,9 +38,9 @@ def evaluate_algorithm(scopes, algo, test_data_set, pollutant, norm, \
 			predicted_levels = net_prediction.predict_middle_points(
 				test_data, pollutant, scopes)
 		err = evaluate_error(predicted_levels, actual_levels, norm)
-		for j in range(future_scope):
+		for j in xrange(future_scope):
 			errors[j] += err[j] 
 	errors /= count
 	print 'Running Average Error'
-	for i in range(len(errors)):
+	for i in xrange(len(errors)):
 		print str(i + 1) + ': ' + str(sum(errors[: i + 1]) / float(i + 1))

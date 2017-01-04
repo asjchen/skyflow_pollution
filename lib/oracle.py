@@ -8,7 +8,6 @@ network.
 
 import data_util
 import test_util
-import numpy as np
 
 def evaluate_oracle(pollution_dir_test, radius, future_scope, pollutant, norm):
 	test_data_set = data_util.data_from_directory(pollution_dir_test)
