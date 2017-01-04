@@ -5,17 +5,18 @@ expected performance of the actual neural network. Here, we run linear
 regression on the last [past_scope] hours for each pollutant.
 """
 
-import input_util, test_util
-import random
+import data_util
+import test_util
 import numpy as np
 
-def main():
-	input_args = input_util.parse_baseline_input()
-	pollution_dir_test, past_scope, future_scope, pollutant, norm = input_args
-	test_data_set = input_util.data_from_directory(pollution_dir_test)
+def evaluate_baseline(pollution_dir_test, past_scope, future_scope, pollutant, norm):
+	test_data_set = data_util.data_from_directory(pollution_dir_test)
 	scopes = (past_scope, future_scope)
 	test_util.evaluate_algorithm(scopes, 'baseline', test_data_set, \
 		pollutant, norm)
 
-if __name__ == '__main__':
-	main()
+def parse_baseline_input(args):
+	args.pollution_dir_test = data_util.remove_slash(args.pollution_dir_test)
+	evaluate_baseline(args.pollution_dir_test, args.past_scope, \
+		args.future_scope, args.chemical, args.norm)
+

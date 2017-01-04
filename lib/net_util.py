@@ -4,37 +4,16 @@ Functions common to both neural networks
 
 import math
 import numpy as np
-import input_util
+import data_util
 import test_util
 import net_prediction
 import feed_forward_nn
 import elman_rnn
+from nn_globals import NetHyperparams
 from nn_globals import OUTPUT_DIM, NUM_VARS
 
 def stochastic_gradient_descent(network_setup, train_data, model, \
     verbose=2, verbose_n=1):
-    """Runs stochastic gradient descent
-
-    @param loss_func:       full loss based on the whole data set
-    @param arg_names:       argument names corresponding to the lossFuncGrad
-    @param model:           randomly initialized model
-    @param train_data:       list of tuples where each tuple is ([input data], [correct output data])
-                            (where the arrays are np arrays)
-    @param lossFuncGrad:    a list of functions [dLoss/dW1, dLoss/db1, dLoss/dW2, dLoss/db2]
-                            where each function's header is func([input data], [correct output data], model)
-    @param activation:      the name of the activation of the middle layer
-                            (where each array is an np arrays)
-    @param num_iterations:   number of iterations to run gradient descent
-    @param output_dim:      dimension of output layer
-    @param hidden_dim:      dimension of hidden layer
-    @param possible_update: possible update to run at each iteration (passed model and the input)
-    @param verbose:         0 to NOT print; 1 to print on each update; 2 to print only once per verbose_n iterations
-    @param verbose_n:       used only when verbose == 2 (see description of verbose param for details)
-
-    Returns:
-        a trained model dictionary
-    """
-
     # Compute average levels
     loss_func, loss_func_grad, possible_update, hyper = network_setup
     temp = []
@@ -54,7 +33,7 @@ def stochastic_gradient_descent(network_setup, train_data, model, \
     num_updates = 0 # used for step size
     train_inputs = [j[0] for j in train_data]
     train_outputs = [j[1] for j in train_data]
-    for t in range(hyper.num_iterations):
+    for t in xrange(hyper.num_iterations):
 
         for input_data, correct_output_data in train_data:
 
@@ -65,7 +44,8 @@ def stochastic_gradient_descent(network_setup, train_data, model, \
             num_updates += 1
             eta = hyper.step_scale / (math.sqrt(num_updates))
             for param in loss_func_grad:
-                grad = loss_func_grad[param](input_data, correct_output_data, model, average_levels, hyper)
+                grad = loss_func_grad[param](input_data, \
+                    correct_output_data, model, average_levels, hyper)
                 model[param] -= eta * grad 
 
             possible_update(model, input_data)
@@ -84,16 +64,6 @@ def stochastic_gradient_descent(network_setup, train_data, model, \
     return (model, final_loss)
 
 def run_neural_net(pollution_data_list, hyper, has_feedback):
-    """ Runs the neural net on pollution_data
-    
-    @param pollution_data_list: list of pollutionHour objects representing all
-                                data in the dataset
-    @param num_hours_used:      number of hours to use when predicting the next hour
-    @param hidden_dim:          number of neurons to use in the hidden layer
-    @param num_iterations:      number of iterations to run SGD
-    @param verbose:             0 to NOT print; 1 to print on each update; 2 to print only once per verbose_n iterations
-    @param verbose_n:           used only when verbose == 2 (see description of verbose param for details)       
-    """
     if not has_feedback:
         calculate_loss = feed_forward_nn.calculate_loss
         process_data_set = feed_forward_nn.process_data_set
@@ -116,8 +86,9 @@ def run_neural_net(pollution_data_list, hyper, has_feedback):
     else:
         loss_gradients = elman_rnn.get_loss_gradients()
         update = elman_rnn.update
-        U = np.random.randn(hyper.hidden_dim, hyper.hidden_dim) / np.sqrt(hyper.hidden_dim)
-        h = [np.zeros((hyper.hidden_dim, 1))]
+        hidden_dim = hyper.hidden_dim
+        U = np.random.randn(hidden_dim, hidden_dim) / np.sqrt(hidden_dim)
+        h = [np.zeros((hidden_dim, 1))]
         model.update({'U': U, 'h': h})
     network_setup = (calculate_loss, loss_gradients, update, hyper)
     return stochastic_gradient_descent(network_setup, train_data, model)
@@ -134,10 +105,10 @@ def test_module(pollution_dirs, hyper, has_feedback):
         update = elman_rnn.update
 
     # TRAINING SET
-    pollution_data_list_train = input_util.data_from_directory(pollution_dir_train)
+    pollution_data_list_train = data_util.data_from_directory(pollution_dir_train)
 
     # TEST SET
-    pollution_data_list_test = input_util.data_from_directory(pollution_dir_test)
+    pollution_data_list_test = data_util.data_from_directory(pollution_dir_test)
     (model, loss) = run_neural_net(pollution_data_list_train, hyper, has_feedback)
 
     print 'PROCESSING TRAIN SET'
@@ -163,8 +134,6 @@ def test_module(pollution_dirs, hyper, has_feedback):
     loss = calculate_loss(train_inputs, train_outputs, model, average_levels_train, \
         update, hyper, print_loss_vector = True)
     print "TRAIN LOSS: ", loss
-    
-    """ END TRAIN"""
 
     (test_inputs, test_outputs) = process_data_set(
         pollution_data_list_test, hyper.past_scope)
@@ -186,14 +155,24 @@ def test_module(pollution_dirs, hyper, has_feedback):
     print "TEST LOSS: ", loss
     return model
 
-def train_nn():
-    input_args = input_util.parse_nn_input()
-    (algo, pollution_dirs, hyper, pollutant) = input_args
+def train_nn(algo, pollution_dirs, hyper, pollutant):
     pollution_dir_train, pollution_dir_test = pollution_dirs
-    test_data_set = input_util.data_from_directory(pollution_dir_test)
+    test_data_set = data_util.data_from_directory(pollution_dir_test)
     print 'READING DATA COMPLETE'
     has_feedback = (algo == 'elman')
     model = test_module(pollution_dirs, hyper, has_feedback)
     scopes = (hyper.past_scope, hyper.future_scope)
     test_util.evaluate_algorithm(scopes, algo, test_data_set, pollutant, \
         hyper.norm, hyper=hyper, model=model)
+
+def parse_nn_input(args):
+    args.pollution_dir_test = data_util.remove_slash(args.pollution_dir_test)
+    args.pollution_dir_train = data_util.remove_slash(args.pollution_dir_train)
+    pollution_dirs = (args.pollution_dir_train, args.pollution_dir_test)
+    reg_params = { 'W1': args.reg_w1, 'b1': args.reg_b1, 'W2': args.reg_w2, \
+        'b2': args.reg_b2, 'U': args.reg_u }
+    hyper = NetHyperparams(args.hidden_dim, args.activation, args.past_scope, \
+        reg_params, args.num_iterations, args.future_scope, args.norm, \
+        args.step_scale)
+    train_nn(args.algo, pollution_dirs, hyper, args.chemical)
+

@@ -6,16 +6,18 @@ provide an upper bound on the expected performance of the actual neural
 network. 
 """
 
-import input_util, net_prediction, test_util
+import data_util
+import test_util
 import numpy as np
 
-def main():
-	input_args = input_util.parse_oracle_input()
-	pollution_dir_test, radius, future_scope, pollutant, norm = input_args
-	test_data_set = input_util.data_from_directory(pollution_dir_test)
+def evaluate_oracle(pollution_dir_test, radius, future_scope, pollutant, norm):
+	test_data_set = data_util.data_from_directory(pollution_dir_test)
 	scopes = (radius, future_scope)
 	test_util.evaluate_algorithm(scopes, 'oracle', test_data_set, \
 		pollutant, norm)
 
-if __name__ == '__main__':
-	main()
+def parse_oracle_input(args):
+	args.pollution_dir_test = data_util.remove_slash(args.pollution_dir_test)
+	evaluate_oracle(args.pollution_dir_test, args.radius, args.future_scope, \
+		args.chemical, args.norm)
+

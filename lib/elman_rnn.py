@@ -24,22 +24,6 @@ from pollution_hour import get_pollutants, get_variables
 
 def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 	possible_update, hyper, print_loss_vector = False):
-	""" Calculates the loss on the dataset (prints the loss vector)
-
-	@param all_input_data:      list of data points in dataset where each data
-								point is a list of length NUM_HOURS_USED * NUM_VARS
-	@param correct_output_data: list of lists where the ith list corresponds to the
-								ith data entry in all_input_data; the lists are of length
-								NUM_POLLUTANTS
-	@param model:               dictionary of parameters (contains 'W1', 'b1', 'W2', 'b2')
-	@param avg_levels:          list of average levels for pollutants
-	@param print_loss_vector:   boolean (default false) that prints the loss 
-								vector if set to true
-
-	Returns:
-		average of [sum of (|predicted - actual|/avg_level) over all pollutants] 
-		over all data points
-	"""
 	(W1, b1, W2, b2, U, h) = (model['W1'], model['b1'], model['W2'], \
 		model['b2'], model['U'], model['h'])
 	loss = 0.0
@@ -73,24 +57,6 @@ def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 			total_reg += reg_const * 0.5 * (np.linalg.norm(model[param]) ** 2) 
 
 	return loss / len(all_input_data) + total_reg
-
-#################### Gradient functions ####################
-
-""" Calculate the gradient of our feed forward network with respect
-	to the variables w1, w2, b1, b2
-
-	@param input_data:           list of length NUM_HOURS_USED * NUM_VARS
-								representing 1 data point           
-	@param correct_output_data:   list of length NUM_POLLUTANTS representing
-								the correct result for input_data
-	@param model:               model params as dictionary (contains 'W1', 'W2'
-								'b1', 'b2')
-	@param avg_levels:           list of length NUM_POLLUTANTS representing
-								the average levels of the pollutants
-
-	Returns:
-		the corresponding gradient function
-"""
 
 def loss_gradient_b2(input_data, correct_output_data, model, avg_levels, hyper):
 	(W1, b1, W2, b2, U, h) = (model['W1'], model['b1'], model['W2'], \
@@ -319,17 +285,7 @@ def loss_gradient_U(input_data, correct_output_data, model, avg_levels, hyper):
 	gradient += hyper.reg_params['U'] * U 
 	return gradient   
 
-##################################################################
-
 def process_data_set(pollution_data_list, num_hours_used):
-	"""Parses list of pollution data into input and output vectors
-
-	@param pollution_data_list:   list of pollutionHour objects representing all
-								data in the dataset
-	@param num_hours_used:      number of hours to use when predicting the next hour
-	
-	"""
-
 	input_vectors = [None]
 	output_vectors = [None]
 	for pollution_data in pollution_data_list:
