@@ -138,13 +138,13 @@ def parse_oracle_input():
 def parse_nn_input():
 	nn_descr = 'Neural Network -- runs on a sliding window of the input data'
 	top_parser = argparse.ArgumentParser(description=nn_descr)
-	subparsers = top_parser.add_subparsers(title='subcommands',
-		description='valid subcommands', help='Neural network types')
-	forward_parser = subparsers.add_parser('feed-forward', 
+	subparsers = top_parser.add_subparsers(title='subcommands', \
+		description='valid subcommands', \
+		dest='algo', help='Neural network types')
+	forward_parser = subparsers.add_parser('feed-forward', \
 		help='Feed-Forward NN')
-	forward_parser.set_defaults(has_feedback=False)
-	elman_parser = subparsers.add_parser('elman', help='Elman RNN')
-	elman_parser.set_defaults(has_feedback=True)
+	elman_parser = subparsers.add_parser('elman', \
+		help='Elman RNN')
 	subparser_list = [forward_parser, elman_parser]
 	for i in range(2):
 		parser = subparser_list[i]
@@ -189,5 +189,5 @@ def parse_nn_input():
 	hyper = NetHyperparams(args.hidden_dim, args.activation, args.past_scope, \
 		reg_params, args.num_iterations, args.future_scope, args.norm, \
 		args.step_scale)
-	return (args.has_feedback, pollution_dirs, hyper, args.chemical)
+	return (args.algo, pollution_dirs, hyper, args.chemical)
 

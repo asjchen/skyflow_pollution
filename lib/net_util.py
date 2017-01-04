@@ -12,7 +12,7 @@ import elman_rnn
 from nn_globals import OUTPUT_DIM, NUM_VARS
 
 def stochastic_gradient_descent(network_setup, train_data, model, \
-    verbose=2, verbose_n=4):
+    verbose=2, verbose_n=1):
     """Runs stochastic gradient descent
 
     @param loss_func:       full loss based on the whole data set
@@ -188,22 +188,12 @@ def test_module(pollution_dirs, hyper, has_feedback):
 
 def train_nn():
     input_args = input_util.parse_nn_input()
-    (has_feedback, pollution_dirs, hyper, pollutant) = input_args
+    (algo, pollution_dirs, hyper, pollutant) = input_args
     pollution_dir_train, pollution_dir_test = pollution_dirs
     test_data_set = input_util.data_from_directory(pollution_dir_test)
     print 'READING DATA COMPLETE'
+    has_feedback = (algo == 'elman')
     model = test_module(pollution_dirs, hyper, has_feedback)
-    errors = np.zeros((hyper.future_scope,))
-    for test_data in test_data_set:
-        scopes = (hyper.past_scope, hyper.future_scope)
-        actual_levels = net_prediction.isolate_pollutant_series(
-            test_data, pollutant, scopes)
-        predicted_levels = net_prediction.predict_next_nn_points(
-            model, test_data, pollutant, hyper, has_feedback)
-        err = test_util.evaluate_error(
-            predicted_levels, actual_levels, hyper.norm)
-        for j in range(hyper.future_scope):
-            errors[j] += err[j] / float(len(test_data_set))
-    print 'Running Average Error'
-    for i in range(len(errors)):
-        print str(i + 1) + ': ' + str(sum(errors[: i + 1]) / float(i + 1))
+    scopes = (hyper.past_scope, hyper.future_scope)
+    test_util.evaluate_algorithm(scopes, algo, test_data_set, pollutant, \
+        hyper.norm, hyper=hyper, model=model)
