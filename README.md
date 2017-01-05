@@ -1,4 +1,4 @@
-Skyflow: Pollution Prediction
+Skyflow: Air Pollution Prediction
 -----------------------------
 
 By Andy Chen and Nick Hirning
