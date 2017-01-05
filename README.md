@@ -3,10 +3,9 @@ Skyflow: Pollution Prediction
 
 By Andy Chen and Nick Hirning
 
-This codebase serves as our final project for Stanford University's CS 221 
-(Artificial Intelligence). In this project, we predict pollution levels in
-a particular location based on historical hourly pollutant and weather data 
-in that location. Our general approach involves two types of three-layer 
+In this project (developed for Stanford University CS 221), we predict pollution 
+levels in a particular location based on historical hourly pollutant and weather 
+data in that location. Our general approach involves two types of three-layer 
 neural networks, which we train on a dataset from Northern Taiwan. 
 
 To evaluate the performance of our neural networks, we also construct a 
