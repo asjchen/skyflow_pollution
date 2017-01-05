@@ -24,6 +24,18 @@ from pollution_hour import get_pollutants, get_variables
 
 def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 	possible_update, hyper, print_loss_vector = False):
+	""" Loss function for elman RNN
+
+	all_input_data:			input data points
+	correct_output_data:	correct output
+	model:					model information (e.g., W1, W2, ...)
+	avg_levels:				average levels of pollutants
+	possible_update:		update function for recursive functionality 		
+	hyper:					hyper parameter object	
+	print_loss_vector:		True to print the loss vector	
+
+	"""
+
 	(W1, b1, W2, b2, U, h) = (model['W1'], model['b1'], model['W2'], \
 		model['b2'], model['U'], model['h'])
 	loss = 0.0
@@ -50,6 +62,7 @@ def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 			loss_vector[i] /= len(all_input_data)
 		print "Loss Vector: \n", loss_vector
 
+	# Regularization
 	total_reg = 0.0
 	for param in hyper.reg_params:
 		if param in model:
@@ -57,6 +70,10 @@ def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 			total_reg += reg_const * 0.5 * (np.linalg.norm(model[param]) ** 2) 
 
 	return loss / len(all_input_data) + total_reg
+
+####################################################
+#################### Gradients #####################
+####################################################
 
 def loss_gradient_b2(input_data, correct_output_data, model, avg_levels, hyper):
 	(W1, b1, W2, b2, U, h) = (model['W1'], model['b1'], model['W2'], \
@@ -283,9 +300,21 @@ def loss_gradient_U(input_data, correct_output_data, model, avg_levels, hyper):
 
 		gradient += mult_vector * (j_comp * u_comp)
 	gradient += hyper.reg_params['U'] * U 
-	return gradient   
+	return gradient 
+
+
+####################################################
+############### Processing Functions ###############
+####################################################  
 
 def process_data_set(pollution_data_list, num_hours_used):
+	""" Processes data set given list of lists of pollutionHour objects
+	and the number of hours used
+
+	Returns a tuple of lists of lists (input-vectors, output-vectors);
+			input-vectors is a list of lists where each entry is an input
+			vector and similar for output-vectors
+	"""
 	input_vectors = [None]
 	output_vectors = [None]
 	for pollution_data in pollution_data_list:
@@ -326,6 +355,7 @@ def process_data_set(pollution_data_list, num_hours_used):
 	return (input_vectors, output_vectors)
 
 def update(model, input_data):
+	# update function for elman RNN
 	W1, b1, U, h = model['W1'], model['b1'], model['U'], model['h']
 	z1 = (W1.dot(input_data) + b1) + U.dot(h[-1])
 	z2 = np.tanh(z1)

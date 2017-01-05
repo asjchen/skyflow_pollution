@@ -24,7 +24,7 @@ File Descriptions
 2. data_util.py        -- functions for processing CSV files in the directories 
 3. driver.py           -- top-level driver for executing the algorithms
 4. elman_rnn.py        -- functions specific to the Elman recurrent neural net
-5. feed_forward_nn.py  -- functions specific to the feed-forward neural net
+5. feed\_forward\_nn.py  -- functions specific to the feed-forward neural net
 6. input_util.py       -- functions useful for parsing input 
 7. net_prediction.py   -- functions useful for predicting certain points using 
                           a prediction algorithm (useful for creating graphs)

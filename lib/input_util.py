@@ -8,15 +8,20 @@ import baseline
 import oracle
 from nn_globals import NORM_FUNCTIONS, ACTIVATION_FUNCTIONS
 
-default_past_scope = 12
-default_future_scope = 12
-default_hidden_dim = 100
-default_activation = 'tanh'
-default_num_iterations = 20
-default_norm = 'L1'
-default_step_scale = 0.05
+default_past_scope = 12 	# number of past data points to use for prediction
+default_future_scope = 12 	# number of hours in the future to predict
+default_hidden_dim = 100 	# dimension of hidden layer
+default_activation = 'tanh' # neural net activation function (hyperbolic tangent)
+default_num_iterations = 20 # number of SGD iterations
+default_norm = 'L1' 		# default norm (weighted absolute value)
+default_step_scale = 0.05 	# step size factor (step_size = step_scale/sqrt(num_updates))
+
+####################################################################
+####################  ArgParse Functionality  ######################
+####################################################################
 
 def make_base_parser(parser):
+	# adds arguments for all parsers
 	parser.add_argument('-f', '--future_scope', type=int, \
 		default=default_future_scope, \
 		help='Scope of future -- number of points to predict')
@@ -27,6 +32,7 @@ def make_base_parser(parser):
 		help='Loss function, choose from ' + str(NORM_FUNCTIONS.keys()))
 
 def make_baseline_parser(parser):
+	# creates the baseline parser
 	make_base_parser(parser)
 	parser.add_argument('pollution_dir_test', type=str, \
 		help='Directory with the test pollution data')
@@ -36,6 +42,7 @@ def make_baseline_parser(parser):
 	parser.set_defaults(func=baseline.parse_baseline_input)
 
 def make_oracle_parser(parser):
+	# creates the oracle parser
 	make_base_parser(parser)
 	parser.add_argument('pollution_dir_test', type=str, \
 		help='Directory with the test pollution data')
@@ -45,6 +52,7 @@ def make_oracle_parser(parser):
 	parser.set_defaults(func=oracle.parse_oracle_input)
 
 def make_nn_parser(parser):
+	# creates the neural net parser
 	make_base_parser(parser)
 	parser.add_argument('pollution_dir_train', type=str, \
 		help='Directory with the train pollution data')
@@ -80,6 +88,7 @@ def make_nn_parser(parser):
 	parser.set_defaults(func=net_util.parse_nn_input)
 
 def make_top_parser():
+	# creates all parsers and returns the top parser
 	top_descr = 'Toolbox of algorithms for predicting pollution levels'
 	top_parser = argparse.ArgumentParser(description=top_descr)
 	subparsers = top_parser.add_subparsers(title='subcommands', \

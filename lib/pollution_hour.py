@@ -6,6 +6,11 @@ Attributes include date, hour, average hourly levels of O3, NO2, CO, etc
 from datetime import datetime
 
 class PollutionHour:
+	""" 
+	Every instance of this class represents one hour of data 
+	and contains all necessary information to characterize that hour
+	"""
+
 	def __init__(self, chron, station, pollutant_names, pollutant_vals, \
 		weather_names, weather_vals):
 		self.chron = datetime.strptime(chron, '%Y/%m/%d %H:%M')
@@ -14,6 +19,11 @@ class PollutionHour:
 		self.weather = dict(zip(weather_names, weather_vals))
 
 	def format_output(self):
+		"""
+		Capability for printing out a nicely formatted version of
+		PollutionHour objects
+		"""
+
 		print 'Time: ' + self.chron.strftime('%Y/%m/%d %H:%M')
 		print 'Station: ' + self.station
 		for poll in sorted(self.pollutants):

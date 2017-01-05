@@ -13,6 +13,17 @@ from nn_globals import OUTPUT_DIM, NUM_VARS
 
 def stochastic_gradient_descent(network_setup, train_data, model, \
     verbose=2, verbose_n=1):
+    """ Performs stochastic gradient descent
+
+    network_setup:  info on loss function, hyperparams, and RNN vs FFNN
+    train_data:     dataset on which to train (in parsed form)
+    model:          neural net current model
+    verbose:        0 to not print; 1 to print every inner iteration; 
+                    2 to print every verbose_n iterations
+    verbose_n:      used for verbose=2 printing
+    
+    """
+
     # Compute average levels
     loss_func, loss_func_grad, possible_update, hyper = network_setup
     temp = []
@@ -93,6 +104,8 @@ def run_neural_net(pollution_data_list, hyper, has_feedback):
     return stochastic_gradient_descent(network_setup, train_data, model)
 
 def test_module(pollution_dirs, hyper, has_feedback):
+    # helper for training/testing neural net models
+
     pollution_dir_train, pollution_dir_test = pollution_dirs
     if not has_feedback:
         calculate_loss = feed_forward_nn.calculate_loss
@@ -155,6 +168,7 @@ def test_module(pollution_dirs, hyper, has_feedback):
     return model
 
 def train_nn(algo, pollution_dirs, hyper, pollutant):
+    # helper for training a neural net
     pollution_dir_train, pollution_dir_test = pollution_dirs
     test_data_set = data_util.data_from_directory(pollution_dir_test)
     print 'READING DATA COMPLETE'
@@ -165,6 +179,7 @@ def train_nn(algo, pollution_dirs, hyper, pollutant):
         hyper.norm, hyper=hyper, model=model)
 
 def parse_nn_input(args):
+    # helper for parsing input to the neural net
     args.pollution_dir_test = data_util.remove_slash(args.pollution_dir_test)
     args.pollution_dir_train = data_util.remove_slash(args.pollution_dir_train)
     pollution_dirs = (args.pollution_dir_train, args.pollution_dir_test)

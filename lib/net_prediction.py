@@ -9,6 +9,8 @@ from nn_globals import OUTPUT_DIM, NUM_VARS, NUM_POLLUTANTS
 import scipy.stats
 
 def predict_next_points(next_pred, test_vectors, scopes):
+	# helper for predicting points given the test vectors and 
+	# the prediction fucntion (as well as scopes)
 	num_hours_used, future_scope = scopes
 	(input_vectors, output_vectors) = test_vectors
 	curr_input = input_vectors[0]
@@ -27,6 +29,18 @@ def predict_next_points(next_pred, test_vectors, scopes):
 	return predictions
 
 def predict_next_nn_points(model, pollution_data, pollutant, hyper, feedback):
+	""" Predicts the next points with a neural net
+
+	model:				neural net trained model
+	pollution_data:		data on which we should base our predictions
+						(format: list of list of PollutionHour objects)
+	pollutant:			name of pollutant whose data we want to graph
+	hyper:				hyperparameter object (define in nn_globals)
+	feedback: 			True for RNN
+
+	Returns list of lists of predictions for the pollutants
+	"""
+
 	test_vectors = process_data_set([pollution_data], hyper.past_scope)
 	sorted_pollutants = sorted(pollution_data[0].pollutants)
 	if pollutant != None:
@@ -46,6 +60,16 @@ def predict_next_nn_points(model, pollution_data, pollutant, hyper, feedback):
 		return [output[: NUM_POLLUTANTS] for output in predictions]
 
 def predict_next_linear_points(pollution_data, pollutant, scopes):
+	""" Predicts the next points with baseline linear regression.
+
+	pollution_data:		data on which we should base our predictions
+						(format: list of list of PollutionHour objects)
+	pollutant:			name of pollutant whose data we want to graph
+	scopes:				tuple of past and future scopes
+
+	Returns list of lists of predictions for the pollutants
+	"""
+
 	past_scope, future_scope = scopes
 	test_vectors = process_data_set([pollution_data], past_scope)
 	sorted_pollutants = sorted(pollution_data[0].pollutants)
@@ -73,6 +97,15 @@ def predict_next_linear_points(pollution_data, pollutant, scopes):
 		return [output[: NUM_POLLUTANTS] for output in predictions]
 
 def predict_middle_points(pollution_data, pollutant, scopes):
+	""" Predicts the next points with oracle linear regression.
+
+	pollution_data:		data on which we should base our predictions
+						(format: list of list of PollutionHour objects)
+	pollutant:			name of pollutant whose data we want to graph
+	scopes:				tuple of past and future scopes
+
+	Returns list of lists of predictions for the pollutants
+	"""
 	num_hours_used, future_scope = scopes
 	total_scope = 2 * num_hours_used + 1
 	test_vectors = process_data_set([pollution_data], total_scope)
@@ -102,6 +135,7 @@ def predict_middle_points(pollution_data, pollutant, scopes):
 		return [output[: NUM_POLLUTANTS] for output in predictions]
 
 def isolate_pollutant_series(pollution_data, pollutant, scopes):
+	# isolates pollutant series out of the overall pollution data (w/weather, etc.)
 	num_hours_used, future_scope = scopes
 	sorted_pollutants = sorted(pollution_data[0].pollutants)
 	if pollutant != None:

@@ -24,6 +24,18 @@ from pollution_hour import get_pollutants, get_variables
 
 def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 	possible_update, hyper, print_loss_vector = False):
+	""" Loss function for feed-forward NN
+
+	all_input_data:			input data points 
+	correct_output_data:	correct output
+	model:					model information (e.g., W1, W2, ...)
+	avg_levels:				average levels of pollutants
+	possible_update:		update function for recursive functionality 		
+	hyper:					hyper parameter object	
+	print_loss_vector:		True to print the loss vector	
+
+	"""
+
 	W1, b1, W2, b2 = model['W1'], model['b1'], model['W2'], model['b2']
 	loss = 0.0
 
@@ -49,6 +61,10 @@ def calculate_loss(all_input_data, correct_output_data, model, avg_levels, \
 		print "Loss _vector: \n", loss_vector
 
 	return (loss / len(all_input_data)) + total_reg
+
+####################################################
+#################### Gradients #####################
+####################################################
 
 def loss_gradient_b2(input_data, correct_output_data, model, avg_levels, hyper):
 	W1, b1, W2, b2 = model['W1'], model['b1'], model['W2'], model['b2']
@@ -110,6 +126,13 @@ def loss_gradient_W1(input_data, correct_output_data, model, avg_levels, hyper):
 	return gradient   
 
 def process_data_set(pollution_data_list, num_hours_used):
+	""" Processes data set given list of lists of pollutionHour objects
+	and the number of hours used
+
+	Returns a tuple of lists of lists (input-vectors, output-vectors);
+			input-vectors is a list of lists where each entry is an input
+			vector and similar for output-vectors
+	"""
 	input_vectors = []
 	output_vectors = []
 	for pollution_data in pollution_data_list:
@@ -134,7 +157,7 @@ def process_data_set(pollution_data_list, num_hours_used):
 		in output_vectors]
 	return (input_vectors, output_vectors)
 
-def none_func(x, y): return
+def none_func(x, y): return # used as update function for feed-forward (since that functionality is for RNN)
 
 def get_loss_gradients():
 	loss_gradients = {

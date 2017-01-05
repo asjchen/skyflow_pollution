@@ -8,12 +8,25 @@ import re
 from pollution_hour import PollutionHour
 
 def remove_slash(name):
+	# Helper function to remove slashes from end of input filename
 	if name[-1] == '/':
 		return name[: -1]
 	return name	
 
 def parse_taiwanese_csv(csv_file, include_invalid = False, \
 	include_headers = False):
+	""" Parse the CSV data file (formatted like northern 
+	Taiwan Kaggle dataset)
+
+	csv_file:			name of data file
+	include_invalid:	True to include files with invalid data points
+						(invalid == missing or inaccurate data)	
+	include_headers:	True to return a tuple with (pollution_data, headers)
+						where headers is a list of header labels
+
+	Returns a list of PollutionHour objects representing the data
+	"""
+
 	reader = list(csv.reader(csv_file))
 	reader = [line for line in reader if len(line) > 1]
 	csv_file.close()
@@ -69,6 +82,15 @@ def parse_taiwanese_csv(csv_file, include_invalid = False, \
 		return pollution_data, headers
 
 def data_from_directory(pollution_dir):
+	""" Handles processing of a directory of CSV data files
+	
+	pollution_dir:	directory name
+
+	Returns a list of lists where each entry corresponds to a
+			CSV file and is a list of the PollutionHour objects 
+			from that file
+	"""
+
 	pollution_data_list = []
 	for dirpath, dirnames, filenames in os.walk(pollution_dir):
 		for f in filenames:
