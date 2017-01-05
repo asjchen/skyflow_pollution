@@ -6,7 +6,7 @@ By Andy Chen and Nick Hirning
 In this project (developed for Stanford University CS 221), we predict pollution 
 levels in a particular location based on historical hourly pollutant and weather 
 data in that location. Our general approach involves two types of three-layer 
-neural networks, which we train on a dataset from Northern Taiwan. 
+neural networks, which we train on a dataset from northern Taiwan. 
 
 To evaluate the performance of our neural networks, we also construct a 
 baseline, a simple algorithm to place a lower bound on our performance, and an
